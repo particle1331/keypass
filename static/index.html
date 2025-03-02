@@ -14,6 +14,8 @@
             --light: #f9fafb;
             --gray: #6b7280;
             --gray-light: #e5e7eb;
+            --orange: #f97316;
+            --orange-dark: #ea580c;
         }
         
         * {
@@ -104,6 +106,41 @@
             border: 1px solid var(--gray-light);
             border-radius: 4px;
             font-size: 1rem;
+        }
+
+        select {
+            color: var(--dark);
+            background-color: white;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1em;
+            padding-right: 2.5rem;
+        }
+
+        /* Only style the empty/disabled options */
+        select option[value=""][disabled] {
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        /* Regular options should be normal */
+        select option {
+            color: var(--dark);
+            font-style: normal;
+        }
+
+        /* Style for when no selection is made */
+        select:invalid {
+            color: #9ca3af;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
         
         button {
@@ -211,6 +248,85 @@
             font-weight: 600;
             color: var(--dark);
         }
+
+        select option[value=""] {
+            color: #9ca3af;  /* Gray color */
+            font-style: italic;
+        }
+
+        .delete-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .confirm-delete {
+            display: flex;
+            align-items: center;
+            height: 44px; /* Match button height */
+            padding: 0 1.5rem;
+            background: white;
+            border: 1px solid var(--gray-light);
+            border-radius: 4px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .confirm-delete input[type="checkbox"] {
+            width: auto;
+            margin: 0 0.5rem 0 0;
+            padding: 0;
+        }
+
+        .result-card {
+            background: #f0fdf4;  /* Light green background */
+            border: 1px solid #86efac;  /* Success border color */
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .result-card .card-header {
+            border-bottom-color: #86efac;
+            margin-bottom: 1.5rem;
+        }
+
+        .result-card .card-title {
+            color: #166534;  /* Dark green text */
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .result-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #166534;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-new {
+            background: var(--orange);
+        }
+
+        .btn-new:hover {
+            background: var(--orange-dark);
+        }
     </style>
 </head>
 <body>
@@ -267,17 +383,17 @@
         <div id="create" class="tab-content">
             <form id="create-form">
                 <div class="form-group">
-                    <label for="create-title">Title*:</label>
+                    <label for="create-title">Title (required):</label>
                     <input type="text" id="create-title" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="create-username">Username*:</label>
+                    <label for="create-username">Username (required):</label>
                     <input type="text" id="create-username" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="create-url">Other:</label>
+                    <label for="create-url">Other (optional):</label>
                     <input type="text" id="create-url" placeholder="N/A">
                 </div>
                 
@@ -287,29 +403,22 @@
                         <input type="password" id="create-password">
                         <div class="password-actions">
                             <button type="button" class="btn-icon" id="toggle-create-password" title="Toggle visibility">👁️</button>
+                            <button type="button" class="btn-icon" id="copy-create-password" title="Copy to clipboard" style="display: none;">📋</button>
                         </div>
                     </div>
                 </div>
                 
-                <button type="submit">Create</button>
+                <div class="button-group">
+                    <button type="submit">Create</button>
+                    <button type="button" id="new-entry" class="btn-new" style="display: none;">New Entry</button>
+                </div>
             </form>
             
             <div id="create-result" style="display: none; margin-top: 2rem;">
                 <div class="alert alert-success">Password created successfully!</div>
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">Generated Password</span>
-                    </div>
-                    <div class="password-field">
-                        <input type="password" id="created-password" readonly>
-                        <div class="password-actions">
-                            <button class="btn-icon" id="toggle-created-password" title="Toggle visibility">👁️</button>
-                            <button class="btn-icon" id="copy-created-password" title="Copy to clipboard">📋</button>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
+
         
         <!-- Update Tab -->
         <div id="update" class="tab-content">
@@ -342,45 +451,36 @@
                 <button type="submit">Update</button>
             </form>
             
-            <div id="update-result" class="grid" style="display: none; margin-top: 2rem;">
-                <div class="alert alert-success" style="grid-column: span 2;">Password updated successfully!</div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">Old Other</span>
-                    </div>
-                    <div id="old-url"></div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">New Other</span>
-                    </div>
-                    <div id="new-url"></div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">Old Password</span>
-                    </div>
-                    <div class="password-field">
-                        <input type="password" id="old-password" readonly>
-                        <div class="password-actions">
-                            <button class="btn-icon" id="toggle-old-password" title="Toggle visibility">👁️</button>
-                            <button class="btn-icon" id="copy-old-password" title="Copy to clipboard">📋</button>
+            <div id="update-result" style="display: none;">
+                <div class="result-card"><div class="alert alert-success">Entry updated successfully!</div>
+                    <div class="result-grid">
+                        <div class="result-item">
+                            <span class="result-label">Old Other</span>
+                            <div id="old-url"></div>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">New Password</span>
-                    </div>
-                    <div class="password-field">
-                        <input type="password" id="new-password" readonly>
-                        <div class="password-actions">
-                            <button class="btn-icon" id="toggle-new-password" title="Toggle visibility">👁️</button>
-                            <button class="btn-icon" id="copy-new-password" title="Copy to clipboard">📋</button>
+                        <div class="result-item">
+                            <span class="result-label">New Other</span>
+                            <div id="new-url"></div>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Old Password</span>
+                            <div class="password-field">
+                                <input type="password" id="old-password" readonly>
+                                <div class="password-actions">
+                                    <button class="btn-icon" id="toggle-old-password" title="Toggle visibility">👁️</button>
+                                    <button class="btn-icon" id="copy-old-password" title="Copy to clipboard">📋</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">New Password</span>
+                            <div class="password-field">
+                                <input type="password" id="new-password" readonly>
+                                <div class="password-actions">
+                                    <button class="btn-icon" id="toggle-new-password" title="Toggle visibility">👁️</button>
+                                    <button class="btn-icon" id="copy-new-password" title="Copy to clipboard">📋</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -399,14 +499,17 @@
                 <select id="delete-username"></select>
             </div>
             
-            <div class="form-group">
-                <label>
+            <div class="delete-actions">
+                <label class="confirm-delete">
                     <input type="checkbox" id="delete-confirm">
-                    Confirm deletion
+                    Confirm Deletion
                 </label>
+                <button id="delete-btn" class="danger">Delete</button>
             </div>
-            
-            <button id="delete-btn" class="danger">Delete</button>
+
+            <div id="delete-result" style="display: none; margin-top: 2rem;">
+                <div class="alert alert-success">Password entry deleted successfully!</div>
+            </div>
         </div>
     </div>
     
@@ -457,11 +560,9 @@
         }
         
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showAlert('Copied to clipboard!');
-            }).catch(err => {
-                console.error('Could not copy text: ', err);
-            });
+            navigator.clipboard.writeText(text).catch(
+                err => {console.error('Could not copy text: ', err);}
+            );
         }
         
         // Fetch all titles
@@ -478,7 +579,21 @@
                     const select = document.getElementById(id);
                     const currentValue = select.value; // Store current selection
                     
+                    // Store the related username selection before updating
+                    const usernameId = id.replace('title', 'username');
+                    const usernameSelect = document.getElementById(usernameId);
+                    const currentUsername = usernameSelect.value;
+                    
                     select.innerHTML = '';
+                    
+                    // Add default empty option with disabled attribute
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = '-- Select Title --';
+                    defaultOption.disabled = true;
+                    defaultOption.selected = true;
+                    select.appendChild(defaultOption);
+                    
                     titles.forEach(title => {
                         const option = document.createElement('option');
                         option.value = title;
@@ -489,11 +604,8 @@
                     // Restore previous selection if it exists
                     if (currentValue && titles.includes(currentValue)) {
                         select.value = currentValue;
-                    }
-                    
-                    // Only trigger change event if there was no previous selection
-                    if (!currentValue) {
-                        select.dispatchEvent(new Event('change'));
+                        // Only fetch entries if we had a previous title selection
+                        fetchEntries(currentValue, currentUsername);
                     }
                 });
             } catch (error) {
@@ -503,7 +615,7 @@
         }
         
         // Fetch entries for a title
-        async function fetchEntries(title) {
+        async function fetchEntries(title, preserveUsername = null) {
             try {
                 const response = await fetch(`${BACKEND_URL}/passwords/${title}`);
                 if (!response.ok) throw new Error('Failed to fetch entries');
@@ -520,9 +632,16 @@
                 Object.entries(usernameSelects).forEach(([titleId, usernameId]) => {
                     if (document.getElementById(titleId).value === title) {
                         const select = document.getElementById(usernameId);
-                        const currentValue = select.value; // Store current selection
-                        
                         select.innerHTML = '';
+                        
+                        // Add default empty option with disabled attribute
+                        const defaultOption = document.createElement('option');
+                        defaultOption.value = '';
+                        defaultOption.textContent = '-- Select Username --';
+                        defaultOption.disabled = true;
+                        defaultOption.selected = true;
+                        select.appendChild(defaultOption);
+                        
                         entriesByTitle[title].forEach(entry => {
                             const option = document.createElement('option');
                             option.value = entry.username;
@@ -530,13 +649,10 @@
                             select.appendChild(option);
                         });
                         
-                        // Restore previous selection if it exists
-                        if (currentValue && entriesByTitle[title].some(entry => entry.username === currentValue)) {
-                            select.value = currentValue;
-                        }
-                        
-                        // Only trigger change event if there was no previous selection
-                        if (!currentValue) {
+                        // Restore username if provided and exists in options
+                        if (preserveUsername && entriesByTitle[title].some(entry => entry.username === preserveUsername)) {
+                            select.value = preserveUsername;
+                            // Trigger change event if username was restored
                             select.dispatchEvent(new Event('change'));
                         }
                     }
@@ -591,21 +707,57 @@
                 });
             });
             
-            // Search functionality
-            document.getElementById('search-username').addEventListener('change', async (e) => {
+            // Search functionality - Modified section
+            async function updateSearchResults() {
                 const title = document.getElementById('search-title').value;
-                const username = e.target.value;
+                const username = document.getElementById('search-username').value;
                 
-                if (title && username) {
+                if (!title || !username) {
+                    document.getElementById('search-result').style.display = 'none';
+                    return;
+                }
+
+                try {
+                    // First ensure we have the latest entries for this title
+                    if (!entriesByTitle[title] || entriesByTitle[title].length === 0) {
+                        await fetchEntries(title);
+                    }
+
+                    // Check if the username exists in our cached entries
+                    const cachedEntry = entriesByTitle[title]?.find(entry => entry.username === username);
+                    if (!cachedEntry) {
+                        document.getElementById('search-result').style.display = 'none';
+                        return;
+                    }
+
+                    // Now fetch the specific entry
                     const entry = await fetchEntry(title, username);
                     if (entry) {
                         document.getElementById('search-url').textContent = entry.url;
                         document.getElementById('search-password').value = entry.password;
                         document.getElementById('search-result').style.display = 'grid';
+                    } else {
+                        document.getElementById('search-result').style.display = 'none';
                     }
+                } catch (error) {
+                    console.error('Error updating search results:', error);
+                    document.getElementById('search-result').style.display = 'none';
+                }
+            }
+
+            // Replace the event listeners for search
+            document.getElementById('search-title').addEventListener('change', async (e) => {
+                const title = e.target.value;
+                if (title) {
+                    await fetchEntries(title); // Wait for entries to be fetched
+                    updateSearchResults();
+                } else {
+                    document.getElementById('search-result').style.display = 'none';
                 }
             });
-            
+
+            document.getElementById('search-username').addEventListener('change', updateSearchResults);
+
             // Create functionality
             document.getElementById('create-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -642,18 +794,62 @@
                     }
                     
                     const result = await response.json();
-                    document.getElementById('created-password').value = result.password;
+                    
+                    // Update the password field with the generated password
+                    document.getElementById('create-password').value = result.password;
+                    
+                    // Show the copy button
+                    document.getElementById('copy-create-password').style.display = 'block';
+                    
+                    // Show success message
                     document.getElementById('create-result').style.display = 'block';
                     
-                    // Clear form
-                    document.getElementById('create-form').reset();
+                    // Show the new entry button after successful creation
+                    document.getElementById('new-entry').style.display = 'block';
                     
-                    // Refresh titles
-                    fetchTitles();
+                    // Preserve current selections before refreshing
+                    const currentSelections = {};
+                    ['search', 'update', 'delete'].forEach(tab => {
+                        currentSelections[tab] = {
+                            title: document.getElementById(`${tab}-title`).value,
+                            username: document.getElementById(`${tab}-username`).value
+                        };
+                    });
+                    
+                    // Refresh the title dropdowns and update entries
+                    await fetchTitles();
+                    
+                    // Restore selections
+                    Object.entries(currentSelections).forEach(([tab, selection]) => {
+                        if (selection.title) {
+                            const titleSelect = document.getElementById(`${tab}-title`);
+                            titleSelect.value = selection.title;
+                            fetchEntries(selection.title, selection.username);
+                        }
+                    });
+                    
                 } catch (error) {
                     console.error('Error creating password:', error);
                     showAlert(`Error creating password: ${error.message}`, 'danger');
                 }
+            });
+
+            // Add New Entry button handler
+            document.getElementById('new-entry').addEventListener('click', () => {
+                // Clear all form fields
+                document.getElementById('create-title').value = '';
+                document.getElementById('create-username').value = '';
+                document.getElementById('create-url').value = '';
+                document.getElementById('create-password').value = '';
+                
+                // Hide copy button
+                document.getElementById('copy-create-password').style.display = 'none';
+                
+                // Hide success message
+                document.getElementById('create-result').style.display = 'none';
+                
+                // Focus on the title field
+                document.getElementById('create-title').focus();
             });
             
             // Update functionality
@@ -716,8 +912,8 @@
                     document.getElementById('new-password').value = result.password;
                     document.getElementById('update-result').style.display = 'grid';
                     
-                    // Refresh entries
-                    fetchEntries(title);
+                    // Refresh entries while preserving the username selection
+                    await fetchEntries(title, username);
                 } catch (error) {
                     console.error('Error updating password:', error);
                     showAlert(`Error updating password: ${error.message}`, 'danger');
@@ -750,10 +946,47 @@
                         throw new Error(error);
                     }
                     
-                    showAlert('Password entry deleted successfully!');
+                    // Show the success message in the dedicated area
+                    document.getElementById('delete-result').style.display = 'block';
                     
-                    // Refresh titles and entries
-                    fetchTitles();
+                    // Hide the message after 5 seconds
+                    setTimeout(() => {
+                        document.getElementById('delete-result').style.display = 'none';
+                    }, 5000);
+                    
+                    // Clear all cached entries to force a fresh fetch
+                    entriesByTitle = {};
+
+                    // First check if there are any remaining entries for this title
+                    const checkResponse = await fetch(`${BACKEND_URL}/passwords/${title}`);
+                    if (checkResponse.ok) {
+                        // Title still exists, refresh entries for all tabs
+                        await fetchEntries(title);
+                        // Update all dropdowns that have this title selected
+                        ['search-title', 'update-title', 'delete-title'].forEach(id => {
+                            if (document.getElementById(id).value === title) {
+                                document.getElementById(id).dispatchEvent(new Event('change'));
+                            }
+                        });
+                    } else {
+                        // Title no longer exists, refresh all dropdowns
+                        await fetchTitles();
+                        
+                        // Reset all username dropdowns
+                        ['search-username', 'update-username', 'delete-username'].forEach(id => {
+                            const select = document.getElementById(id);
+                            select.innerHTML = '';
+                            const defaultOption = document.createElement('option');
+                            defaultOption.value = '';
+                            defaultOption.textContent = '-- Select Username --';
+                            defaultOption.disabled = true;
+                            defaultOption.selected = true;
+                            select.appendChild(defaultOption);
+                        });
+
+                        // Hide any results that might be showing
+                        document.getElementById('search-result').style.display = 'none';
+                    }
                     
                     // Reset confirmation
                     document.getElementById('delete-confirm').checked = false;
@@ -792,6 +1025,11 @@
                     const password = document.getElementById(inputId).value;
                     copyToClipboard(password);
                 });
+            });
+
+            // Make sure selects have the required attribute
+            ['search-title', 'search-username', 'update-title', 'update-username', 'delete-title', 'delete-username'].forEach(id => {
+                document.getElementById(id).required = true;
             });
         });
     </script>
