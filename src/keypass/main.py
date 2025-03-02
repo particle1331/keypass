@@ -1,20 +1,22 @@
-from fastapi import FastAPI, HTTPException, Depends
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.requests import Request
-from getpass import getpass
-
-import sqlite3
-from pydantic import BaseModel
-from cryptography.fernet import Fernet
-import secrets
-import string
 import base64
 import pathlib
-import cryptography
+import secrets
+import sqlite3
+import string
+from getpass import getpass
 
-app = FastAPI()
-DB_PATH = ".db"
+import cryptography
+from cryptography.fernet import Fernet
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+
+
+ROOT_DIR = pathlib.Path(__file__).parent.parent.parent
+DB_PATH = str(ROOT_DIR / ".db")
+STATIC_DIR = ROOT_DIR / "static"
 cipher = None
 
 
@@ -30,14 +32,24 @@ def get_cipher():
     return cipher
 
 
-static_dir = pathlib.Path("static")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 # Route to serve the HTML frontend
 @app.get("/", response_class=HTMLResponse)
-async def get_html_frontend(request: Request):
-    with open(static_dir / "index.html", "r", encoding="utf8") as f:
+async def get_html_frontend():
+    html_path = STATIC_DIR / "index.html"
+    with open(html_path, "r", encoding="utf8") as f:
         html_content = f.read()
     return HTMLResponse(content=html_content)
 

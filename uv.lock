@@ -193,7 +193,6 @@ wheels = [
 [package.optional-dependencies]
 standard = [
     { name = "uvicorn" },
-    { name = "uvicorn", extra = ["standard"] },
 ]
 
 [[package]]

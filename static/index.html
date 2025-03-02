@@ -579,41 +579,52 @@
                     const select = document.getElementById(id);
                     const currentValue = select.value; // Store current selection
                     
-                    // Store the related username selection before updating
-                    const usernameId = id.replace('title', 'username');
-                    const usernameSelect = document.getElementById(usernameId);
-                    const currentUsername = usernameSelect.value;
-                    
                     select.innerHTML = '';
                     
                     // Add default empty option with disabled attribute
                     const defaultOption = document.createElement('option');
                     defaultOption.value = '';
-                    defaultOption.textContent = '-- Select Title --';
+                    defaultOption.textContent = titles.length ? '-- Select Title --' : '-- No Entries Yet --';
                     defaultOption.disabled = true;
                     defaultOption.selected = true;
                     select.appendChild(defaultOption);
                     
-                    titles.forEach(title => {
-                        const option = document.createElement('option');
-                        option.value = title;
-                        option.textContent = title;
-                        select.appendChild(option);
-                    });
+                    if (titles.length) {
+                        titles.forEach(title => {
+                            const option = document.createElement('option');
+                            option.value = title;
+                            option.textContent = title;
+                            select.appendChild(option);
+                        });
+                    }
                     
                     // Restore previous selection if it exists
                     if (currentValue && titles.includes(currentValue)) {
                         select.value = currentValue;
                         // Only fetch entries if we had a previous title selection
-                        fetchEntries(currentValue, currentUsername);
+                        fetchEntries(currentValue);
                     }
                 });
+
+                // If no titles exist, show a message in the search tab
+                if (!titles.length) {
+                    const searchTab = document.getElementById('search');
+                    const noEntriesMsg = document.createElement('div');
+                    noEntriesMsg.className = 'alert alert-danger';
+                    noEntriesMsg.textContent = 'No password entries exist yet. Create one in the Create tab.';
+                    searchTab.insertBefore(noEntriesMsg, searchTab.firstChild);
+                } else {
+                    // Remove the message if it exists and we now have entries
+                    const existingMsg = document.querySelector('#search .alert');
+                    if (existingMsg) existingMsg.remove();
+                }
+
             } catch (error) {
                 console.error('Error fetching titles:', error);
                 showAlert('Error fetching titles: ' + error.message, 'danger');
             }
         }
-        
+
         // Fetch entries for a title
         async function fetchEntries(title, preserveUsername = null) {
             try {
@@ -632,23 +643,25 @@
                 Object.entries(usernameSelects).forEach(([titleId, usernameId]) => {
                     if (document.getElementById(titleId).value === title) {
                         const select = document.getElementById(usernameId);
-                        const currentValue = select.value; // Store current selection
+                        const currentValue = select.value;
                         select.innerHTML = '';
                         
                         // Add default empty option
                         const defaultOption = document.createElement('option');
                         defaultOption.value = '';
-                        defaultOption.textContent = '-- Select Username --';
+                        defaultOption.textContent = entriesByTitle[title].length ? '-- Select Username --' : '-- No Users Found --';
                         defaultOption.disabled = true;
                         defaultOption.selected = !preserveUsername;
                         select.appendChild(defaultOption);
                         
-                        entriesByTitle[title].forEach(entry => {
-                            const option = document.createElement('option');
-                            option.value = entry.username;
-                            option.textContent = entry.username;
-                            select.appendChild(option);
-                        });
+                        if (entriesByTitle[title].length) {
+                            entriesByTitle[title].forEach(entry => {
+                                const option = document.createElement('option');
+                                option.value = entry.username;
+                                option.textContent = entry.username;
+                                select.appendChild(option);
+                            });
+                        }
                         
                         // Restore username if provided and exists in options
                         if (preserveUsername && entriesByTitle[title].some(entry => entry.username === preserveUsername)) {
