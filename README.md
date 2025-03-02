@@ -28,24 +28,17 @@ uv pip install -r requirements.txt
 
 ## Usage 
 
-1. Set your master password as an environment variable:
-```
-# PowerShell
-$env:PASSWORD="your-secure-master-password"
-
-# Bash/Linux
-export PASSWORD="your-secure-master-password"
+1. Start the server:
+```bash
+uv run main.py
 ```
 
-2. Run the server:
-```
-uv run fastapi run
-```
+2. When prompted, enter your master password (input will be hidden)
 
 3. Open your browser at http://localhost:8000
 
 > [!NOTE]  
-> The password you set in the environment variable is used to encrypt/decrypt entries.
+> The password entered at startup is used to encrypt/decrypt entries.
 > Entries created in a session can only be decrypted with the same master password used during creation.
 > If you use different master passwords across sessions, entries will only be accessible with their corresponding master password.
 
