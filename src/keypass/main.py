@@ -19,7 +19,6 @@ PASSWORD = base64.b64encode(bytes((os.environ["PASSWORD"] * 10)[:32], "utf-8"))
 cipher = Fernet(PASSWORD)
 
 static_dir = pathlib.Path("static")
-static_dir.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 

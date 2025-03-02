@@ -632,14 +632,15 @@
                 Object.entries(usernameSelects).forEach(([titleId, usernameId]) => {
                     if (document.getElementById(titleId).value === title) {
                         const select = document.getElementById(usernameId);
+                        const currentValue = select.value; // Store current selection
                         select.innerHTML = '';
                         
-                        // Add default empty option with disabled attribute
+                        // Add default empty option
                         const defaultOption = document.createElement('option');
                         defaultOption.value = '';
                         defaultOption.textContent = '-- Select Username --';
                         defaultOption.disabled = true;
-                        defaultOption.selected = true;
+                        defaultOption.selected = !preserveUsername;
                         select.appendChild(defaultOption);
                         
                         entriesByTitle[title].forEach(entry => {
@@ -652,9 +653,12 @@
                         // Restore username if provided and exists in options
                         if (preserveUsername && entriesByTitle[title].some(entry => entry.username === preserveUsername)) {
                             select.value = preserveUsername;
-                            // Trigger change event if username was restored
-                            select.dispatchEvent(new Event('change'));
+                        } else if (currentValue && entriesByTitle[title].some(entry => entry.username === currentValue)) {
+                            select.value = currentValue;
                         }
+                        
+                        // Always trigger change event
+                        select.dispatchEvent(new Event('change'));
                     }
                 });
             } catch (error) {
@@ -686,22 +690,19 @@
             ['search-title', 'update-title', 'delete-title'].forEach(id => {
                 document.getElementById(id).addEventListener('change', (e) => {
                     const title = e.target.value;
-                    if (title && (!entriesByTitle[title] || entriesByTitle[title].length === 0)) {
+                    if (title) {
                         fetchEntries(title);
-                    } else if (entriesByTitle[title]) {
-                        // Repopulate username dropdown
+                    } else {
+                        // Clear username dropdown if no title selected
                         const usernameId = id.replace('title', 'username');
                         const select = document.getElementById(usernameId);
                         select.innerHTML = '';
-                        
-                        entriesByTitle[title].forEach(entry => {
-                            const option = document.createElement('option');
-                            option.value = entry.username;
-                            option.textContent = entry.username;
-                            select.appendChild(option);
-                        });
-                        
-                        // Trigger change event
+                        const defaultOption = document.createElement('option');
+                        defaultOption.value = '';
+                        defaultOption.textContent = '-- Select Username --';
+                        defaultOption.disabled = true;
+                        defaultOption.selected = true;
+                        select.appendChild(defaultOption);
                         select.dispatchEvent(new Event('change'));
                     }
                 });
@@ -912,8 +913,27 @@
                     document.getElementById('new-password').value = result.password;
                     document.getElementById('update-result').style.display = 'grid';
                     
-                    // Refresh entries while preserving the username selection
+                    // Store current selections from other tabs
+                    const searchTitle = document.getElementById('search-title').value;
+                    const searchUsername = document.getElementById('search-username').value;
+                    const deleteTitle = document.getElementById('delete-title').value;
+                    const deleteUsername = document.getElementById('delete-username').value;
+                    
+                    // Clear the cached entries for this title only
+                    delete entriesByTitle[title];
+                    
+                    // Fetch fresh entries only for the update tab
                     await fetchEntries(title, username);
+                    
+                    // Restore selections for other tabs
+                    if (searchTitle === title) {
+                        const searchSelect = document.getElementById('search-username');
+                        searchSelect.value = searchUsername;
+                    }
+                    if (deleteTitle === title) {
+                        const deleteSelect = document.getElementById('delete-username');
+                        deleteSelect.value = deleteUsername;
+                    }
                 } catch (error) {
                     console.error('Error updating password:', error);
                     showAlert(`Error updating password: ${error.message}`, 'danger');
@@ -946,33 +966,36 @@
                         throw new Error(error);
                     }
                     
-                    // Show the success message in the dedicated area
+                    // Show success message
                     document.getElementById('delete-result').style.display = 'block';
-                    
-                    // Hide the message after 5 seconds
                     setTimeout(() => {
                         document.getElementById('delete-result').style.display = 'none';
                     }, 5000);
                     
-                    // Clear all cached entries to force a fresh fetch
+                    // Check if the deleted entry matches what's currently selected in Update Tab
+                    const updateTitle = document.getElementById('update-title').value;
+                    const updateUsername = document.getElementById('update-username').value;
+                    if (title === updateTitle && username === updateUsername) {
+                        // Clear Update Tab fields and hide results
+                        document.getElementById('update-username').value = '';
+                        document.getElementById('update-url').value = '';
+                        document.getElementById('update-password').value = '';
+                        document.getElementById('update-result').style.display = 'none';
+                    }
+                    
+                    // Clear cached entries and continue with normal refresh logic
                     entriesByTitle = {};
-
-                    // First check if there are any remaining entries for this title
+                    
                     const checkResponse = await fetch(`${BACKEND_URL}/passwords/${title}`);
                     if (checkResponse.ok) {
-                        // Title still exists, refresh entries for all tabs
                         await fetchEntries(title);
-                        // Update all dropdowns that have this title selected
                         ['search-title', 'update-title', 'delete-title'].forEach(id => {
                             if (document.getElementById(id).value === title) {
                                 document.getElementById(id).dispatchEvent(new Event('change'));
                             }
                         });
                     } else {
-                        // Title no longer exists, refresh all dropdowns
                         await fetchTitles();
-                        
-                        // Reset all username dropdowns
                         ['search-username', 'update-username', 'delete-username'].forEach(id => {
                             const select = document.getElementById(id);
                             select.innerHTML = '';
@@ -983,12 +1006,10 @@
                             defaultOption.selected = true;
                             select.appendChild(defaultOption);
                         });
-
-                        // Hide any results that might be showing
                         document.getElementById('search-result').style.display = 'none';
                     }
                     
-                    // Reset confirmation
+                    // Reset confirmation checkbox
                     document.getElementById('delete-confirm').checked = false;
                 } catch (error) {
                     console.error('Error deleting password:', error);
