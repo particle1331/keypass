@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import pathlib
 import secrets
 import sqlite3
@@ -13,16 +14,15 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-
 ROOT_DIR = pathlib.Path(__file__).parent.parent.parent
 DB_PATH = str(ROOT_DIR / ".db")
 STATIC_DIR = ROOT_DIR / "static"
 cipher = None
 
 
-def init_cipher(password: str):
+def init_cipher(master_password: str):
     global cipher
-    encoded_pass = base64.b64encode(bytes((password * 10)[:32], "utf-8"))
+    encoded_pass = base64.b64encode(bytes((master_password * 8)[:32], "utf-8"))
     cipher = Fernet(encoded_pass)
 
 
@@ -30,6 +30,11 @@ def get_cipher():
     if not cipher:
         raise RuntimeError("Cipher not initialized. Start server with CLI.")
     return cipher
+
+
+def hash_password(master_password: str) -> str:
+    """Hash password using SHA-256."""
+    return hashlib.sha256(master_password.encode()).hexdigest()
 
 
 app = FastAPI()
@@ -71,9 +76,11 @@ def get_db():
         conn.close()
 
 
-def init_db():
+def create_db():
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
+
+        # Create passwords table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS passwords (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,7 +91,66 @@ def init_db():
                 UNIQUE (title, username)
             )
         """)
+
+        # Simplified master_password table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS master_password (
+                id INTEGER PRIMARY KEY,
+                password_hash TEXT NOT NULL
+            )
+        """)
         conn.commit()
+
+
+def is_db_initialized() -> bool:
+    """Check if master password is set."""
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM master_password")
+        return cursor.fetchone()[0] > 0
+
+
+def setup_master_password():
+    """Initial setup of master password."""
+
+    print("\nWelcome to KeyPass! Setting up your master password...")
+    print("\n⚠️ WARNING: \nThis password cannot be changed or recovered.")
+    print("Make sure to remember it and keep it secure. 🗃️🗝️\n")
+
+    while True:
+        password = getpass("🔑 Create master password: ")
+        if len(password) < 4:
+            print("❌ Password must be at least 4 characters long.")
+            continue
+
+        confirm = getpass("🔄 Verify master password: ")
+        if password == confirm:
+            break
+        else:
+            print("❌ Passwords don't match. Try again.\n")
+            continue
+
+    print("\n✨ Setting up your vault...")
+
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO master_password (password_hash) VALUES (?)",
+            (hash_password(password),),
+        )
+        conn.commit()
+
+    print("✅ Setup complete! Your vault is ready.")
+    return password
+
+
+def verify_master_password(password: str) -> bool:
+    """Verify if master password is correct."""
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT password_hash FROM master_password")
+        stored_hash = cursor.fetchone()[0]
+        return hash_password(password) == stored_hash
 
 
 def encrypt(password: str) -> str:
@@ -209,15 +275,41 @@ def list_titles(conn: sqlite3.Connection = Depends(get_db)):
     return [row[0] for row in records]
 
 
-def run_server():
-    """CLI entry point for running the server"""
-    password = getpass("Enter master password: ")
-    init_cipher(password)
-    import uvicorn
+BANNER = """
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+██╗  ██╗███████╗██╗   ██╗██████╗  █████╗ ███████╗███████╗
+██║ ██╔╝██╔════╝╚██╗ ██╔╝██╔══██╗██╔══██╗██╔════╝██╔════╝
+█████╔╝ █████╗   ╚████╔╝ ██████╔╝███████║███████╗███████╗
+██╔═██╗ ██╔══╝    ╚██╔╝  ██╔═══╝ ██╔══██║╚════██║╚════██║
+██║  ██╗███████╗   ██║   ██║     ██║  ██║███████║███████║
+╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝
+"""
 
 
 if __name__ == "__main__":
-    init_db()
-    run_server()
+    import sys
+    import uvicorn
+
+    print(BANNER)
+
+    create_db()
+    if not is_db_initialized():
+        password = setup_master_password()
+    else:
+        print("\n🔒 Enter master password: ")
+        attempts = 0
+        while attempts < 3:
+            password = getpass("")
+            if verify_master_password(password):
+                print("✅ Authentication successful!")
+                break
+            attempts += 1
+            print(f"❌ {3 - attempts} attempts remaining.")
+        else:
+            print("\nMaximum attempts reached. Exiting...")
+            sys.exit(0)
+
+    print("\n🚀 Starting server...")
+    init_cipher(password)
+    print("✨ Server is ready! Access your vault at http://localhost:8000\n")
+    uvicorn.run(app, host="localhost", port=8000)

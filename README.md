@@ -30,18 +30,17 @@ uv pip install -r requirements.txt
 
 1. Start the server:
 ```bash
-uv run main.py
+uv run python -m keypass.main
 ```
 
 2. When prompted, enter your master password (input will be hidden)
 
 3. Open your browser at http://localhost:8000
 
-> [!NOTE]  
-> The password entered at startup is used to encrypt/decrypt entries.
-> Entries created in a session can only be decrypted with the same master password used during creation.
-> If you use different master passwords across sessions, entries will only be accessible with their corresponding master password.
-
+> [!WARNING]  
+> The master password cannot be changed or recovered.
+> Make sure to remember it and keep it secure.
+> If lost, the encrypted data cannot be recovered.
 
 ## Database Structure
 
@@ -71,6 +70,6 @@ CREATE TABLE passwords (
 ## Security Best practices
 
 1. Keep your master password secure and don't share it.
-1. Use different master passwords for different security levels.
 2. Backup your `.db` file regularly but keep it secure.
 3. Don't expose the server to the internet - it's designed for local use only.
+4. There is no recovery mechanism for a lost password.
