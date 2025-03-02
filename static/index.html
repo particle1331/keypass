@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Vault 🔒</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --gray: #6b7280;
+            --gray-light: #e5e7eb;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f3f4f6;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+        
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 1rem;
+            background: grey;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn:not(:last-child) {
+            border-right: 1px solid var(--gray-light);
+        }
+        
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-light);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        button {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        button:hover {
+            background: var(--primary-dark);
+        }
+        
+        button.secondary {
+            background: var(--gray);
+        }
+        
+        button.success {
+            background: var(--success);
+        }
+        
+        button.danger {
+            background: var(--danger);
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .alert-danger {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+        
+        .password-field {
+            position: relative;
+        }
+        
+        .password-field input {
+            padding-right: 6rem;
+        }
+        
+        .password-actions {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+        }
+        
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--gray);
+            padding: 0.25rem;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.3s ease;
+        }
+        
+        .btn-icon:hover {
+            color: var(--primary);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--gray-light);
+        }
+        
+        .card-title {
+            font-weight: 600;
+            color: var(--dark);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Password Vault 🔒</h1>
+        </header>
+        
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="search">Search</button>
+            <button class="tab-btn" data-tab="create">Create</button>
+            <button class="tab-btn" data-tab="update">Update</button>
+            <button class="tab-btn" data-tab="delete">Delete</button>
+        </div>
+        
+        <div id="alerts"></div>
+        
+        <!-- Search Tab -->
+        <div id="search" class="tab-content active">
+            <div class="form-group">
+                <label for="search-title">Title:</label>
+                <select id="search-title"></select>
+            </div>
+            
+            <div class="form-group">
+                <label for="search-username">Username:</label>
+                <select id="search-username"></select>
+            </div>
+            
+            <div id="search-result" class="grid" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Other</span>
+                    </div>
+                    <div id="search-url"></div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Password</span>
+                    </div>
+                    <div class="password-field">
+                        <input type="password" id="search-password" readonly>
+                        <div class="password-actions">
+                            <button class="btn-icon" id="toggle-search-password" title="Toggle visibility">👁️</button>
+                            <button class="btn-icon" id="copy-search-password" title="Copy to clipboard">📋</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Create Tab -->
+        <div id="create" class="tab-content">
+            <form id="create-form">
+                <div class="form-group">
+                    <label for="create-title">Title*:</label>
+                    <input type="text" id="create-title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="create-username">Username*:</label>
+                    <input type="text" id="create-username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="create-url">Other:</label>
+                    <input type="text" id="create-url" placeholder="N/A">
+                </div>
+                
+                <div class="form-group">
+                    <label for="create-password">Password (leave blank to autogenerate):</label>
+                    <div class="password-field">
+                        <input type="password" id="create-password">
+                        <div class="password-actions">
+                            <button type="button" class="btn-icon" id="toggle-create-password" title="Toggle visibility">👁️</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit">Create</button>
+            </form>
+            
+            <div id="create-result" style="display: none; margin-top: 2rem;">
+                <div class="alert alert-success">Password created successfully!</div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Generated Password</span>
+                    </div>
+                    <div class="password-field">
+                        <input type="password" id="created-password" readonly>
+                        <div class="password-actions">
+                            <button class="btn-icon" id="toggle-created-password" title="Toggle visibility">👁️</button>
+                            <button class="btn-icon" id="copy-created-password" title="Copy to clipboard">📋</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Update Tab -->
+        <div id="update" class="tab-content">
+            <div class="form-group">
+                <label for="update-title">Title:</label>
+                <select id="update-title"></select>
+            </div>
+            
+            <div class="form-group">
+                <label for="update-username">Username:</label>
+                <select id="update-username"></select>
+            </div>
+            
+            <form id="update-form" style="margin-top: 2rem;">
+                <div class="form-group">
+                    <label for="update-url">Other:</label>
+                    <input type="text" id="update-url">
+                </div>
+                
+                <div class="form-group">
+                    <label for="update-password">Password (leave blank to autogenerate):</label>
+                    <div class="password-field">
+                        <input type="password" id="update-password">
+                        <div class="password-actions">
+                            <button type="button" class="btn-icon" id="toggle-update-password" title="Toggle visibility">👁️</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit">Update</button>
+            </form>
+            
+            <div id="update-result" class="grid" style="display: none; margin-top: 2rem;">
+                <div class="alert alert-success" style="grid-column: span 2;">Password updated successfully!</div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Old Other</span>
+                    </div>
+                    <div id="old-url"></div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">New Other</span>
+                    </div>
+                    <div id="new-url"></div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Old Password</span>
+                    </div>
+                    <div class="password-field">
+                        <input type="password" id="old-password" readonly>
+                        <div class="password-actions">
+                            <button class="btn-icon" id="toggle-old-password" title="Toggle visibility">👁️</button>
+                            <button class="btn-icon" id="copy-old-password" title="Copy to clipboard">📋</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">New Password</span>
+                    </div>
+                    <div class="password-field">
+                        <input type="password" id="new-password" readonly>
+                        <div class="password-actions">
+                            <button class="btn-icon" id="toggle-new-password" title="Toggle visibility">👁️</button>
+                            <button class="btn-icon" id="copy-new-password" title="Copy to clipboard">📋</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Delete Tab -->
+        <div id="delete" class="tab-content">
+            <div class="form-group">
+                <label for="delete-title">Title:</label>
+                <select id="delete-title"></select>
+            </div>
+            
+            <div class="form-group">
+                <label for="delete-username">Username:</label>
+                <select id="delete-username"></select>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="delete-confirm">
+                    Confirm deletion
+                </label>
+            </div>
+            
+            <button id="delete-btn" class="danger">Delete</button>
+        </div>
+    </div>
+    
+    <script>
+        const BACKEND_URL = "http://localhost:8000";
+        let titles = [];
+        let entriesByTitle = {};
+        
+        // Tab switching logic
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons and contents
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked button and its content
+                button.classList.add('active');
+                document.getElementById(button.dataset.tab).classList.add('active');
+            });
+        });
+        
+        // Helper functions
+        function showAlert(message, type = 'success') {
+            const alertsContainer = document.getElementById('alerts');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            alertsContainer.appendChild(alert);
+            
+            // Remove alert after 5 seconds
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+        
+        function togglePasswordVisibility(inputId, buttonId) {
+            const input = document.getElementById(inputId);
+            const button = document.getElementById(buttonId);
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                button.textContent = '👁️';
+            }
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('Copied to clipboard!');
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        }
+        
+        // Fetch all titles
+        async function fetchTitles() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/titles/`);
+                if (!response.ok) throw new Error('Failed to fetch titles');
+                
+                titles = await response.json();
+                
+                // Populate title dropdowns while preserving selection
+                const titleSelects = ['search-title', 'update-title', 'delete-title'];
+                titleSelects.forEach(id => {
+                    const select = document.getElementById(id);
+                    const currentValue = select.value; // Store current selection
+                    
+                    select.innerHTML = '';
+                    titles.forEach(title => {
+                        const option = document.createElement('option');
+                        option.value = title;
+                        option.textContent = title;
+                        select.appendChild(option);
+                    });
+                    
+                    // Restore previous selection if it exists
+                    if (currentValue && titles.includes(currentValue)) {
+                        select.value = currentValue;
+                    }
+                    
+                    // Only trigger change event if there was no previous selection
+                    if (!currentValue) {
+                        select.dispatchEvent(new Event('change'));
+                    }
+                });
+            } catch (error) {
+                console.error('Error fetching titles:', error);
+                showAlert('Error fetching titles: ' + error.message, 'danger');
+            }
+        }
+        
+        // Fetch entries for a title
+        async function fetchEntries(title) {
+            try {
+                const response = await fetch(`${BACKEND_URL}/passwords/${title}`);
+                if (!response.ok) throw new Error('Failed to fetch entries');
+                
+                entriesByTitle[title] = await response.json();
+                
+                // Populate username dropdowns
+                const usernameSelects = {
+                    'search-title': 'search-username',
+                    'update-title': 'update-username',
+                    'delete-title': 'delete-username'
+                };
+                
+                Object.entries(usernameSelects).forEach(([titleId, usernameId]) => {
+                    if (document.getElementById(titleId).value === title) {
+                        const select = document.getElementById(usernameId);
+                        const currentValue = select.value; // Store current selection
+                        
+                        select.innerHTML = '';
+                        entriesByTitle[title].forEach(entry => {
+                            const option = document.createElement('option');
+                            option.value = entry.username;
+                            option.textContent = entry.username;
+                            select.appendChild(option);
+                        });
+                        
+                        // Restore previous selection if it exists
+                        if (currentValue && entriesByTitle[title].some(entry => entry.username === currentValue)) {
+                            select.value = currentValue;
+                        }
+                        
+                        // Only trigger change event if there was no previous selection
+                        if (!currentValue) {
+                            select.dispatchEvent(new Event('change'));
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error(`Error fetching entries for ${title}:`, error);
+                showAlert(`Error fetching entries: ${error.message}`, 'danger');
+            }
+        }
+        
+        // Fetch a single entry
+        async function fetchEntry(title, username) {
+            try {
+                const response = await fetch(`${BACKEND_URL}/passwords/${title}/${username}`);
+                if (!response.ok) throw new Error('Failed to fetch entry');
+                
+                return await response.json();
+            } catch (error) {
+                console.error(`Error fetching entry ${title}/${username}:`, error);
+                showAlert(`Error fetching entry: ${error.message}`, 'danger');
+                return null;
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Fetch initial data
+            fetchTitles();
+            
+            // Setup event listeners for title changes
+            ['search-title', 'update-title', 'delete-title'].forEach(id => {
+                document.getElementById(id).addEventListener('change', (e) => {
+                    const title = e.target.value;
+                    if (title && (!entriesByTitle[title] || entriesByTitle[title].length === 0)) {
+                        fetchEntries(title);
+                    } else if (entriesByTitle[title]) {
+                        // Repopulate username dropdown
+                        const usernameId = id.replace('title', 'username');
+                        const select = document.getElementById(usernameId);
+                        select.innerHTML = '';
+                        
+                        entriesByTitle[title].forEach(entry => {
+                            const option = document.createElement('option');
+                            option.value = entry.username;
+                            option.textContent = entry.username;
+                            select.appendChild(option);
+                        });
+                        
+                        // Trigger change event
+                        select.dispatchEvent(new Event('change'));
+                    }
+                });
+            });
+            
+            // Search functionality
+            document.getElementById('search-username').addEventListener('change', async (e) => {
+                const title = document.getElementById('search-title').value;
+                const username = e.target.value;
+                
+                if (title && username) {
+                    const entry = await fetchEntry(title, username);
+                    if (entry) {
+                        document.getElementById('search-url').textContent = entry.url;
+                        document.getElementById('search-password').value = entry.password;
+                        document.getElementById('search-result').style.display = 'grid';
+                    }
+                }
+            });
+            
+            // Create functionality
+            document.getElementById('create-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const title = document.getElementById('create-title').value;
+                const username = document.getElementById('create-username').value;
+                const url = document.getElementById('create-url').value || 'N/A';
+                const password = document.getElementById('create-password').value;
+                const generate = !password;
+                
+                if (!title || !username) {
+                    showAlert('Title and username are required.', 'danger');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`${BACKEND_URL}/passwords/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            title,
+                            username,
+                            url,
+                            password,
+                            generate
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const error = await response.text();
+                        throw new Error(error);
+                    }
+                    
+                    const result = await response.json();
+                    document.getElementById('created-password').value = result.password;
+                    document.getElementById('create-result').style.display = 'block';
+                    
+                    // Clear form
+                    document.getElementById('create-form').reset();
+                    
+                    // Refresh titles
+                    fetchTitles();
+                } catch (error) {
+                    console.error('Error creating password:', error);
+                    showAlert(`Error creating password: ${error.message}`, 'danger');
+                }
+            });
+            
+            // Update functionality
+            document.getElementById('update-username').addEventListener('change', async (e) => {
+                const title = document.getElementById('update-title').value;
+                const username = e.target.value;
+                
+                if (title && username) {
+                    const entry = await fetchEntry(title, username);
+                    if (entry) {
+                        document.getElementById('update-url').value = entry.url;
+                        document.getElementById('update-password').value = entry.password;
+                    }
+                }
+            });
+            
+            document.getElementById('update-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const title = document.getElementById('update-title').value;
+                const username = document.getElementById('update-username').value;
+                const url = document.getElementById('update-url').value;
+                const password = document.getElementById('update-password').value;
+                const generate = !password;
+                
+                if (!title || !username) {
+                    showAlert('Title and username are required.', 'danger');
+                    return;
+                }
+                
+                try {
+                    // Get current entry for comparison later
+                    const oldEntry = await fetchEntry(title, username);
+                    
+                    const response = await fetch(`${BACKEND_URL}/passwords/`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            title,
+                            username,
+                            url,
+                            password,
+                            generate
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const error = await response.text();
+                        throw new Error(error);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    // Update result display
+                    document.getElementById('old-url').textContent = oldEntry.url;
+                    document.getElementById('new-url').textContent = result.url;
+                    document.getElementById('old-password').value = oldEntry.password;
+                    document.getElementById('new-password').value = result.password;
+                    document.getElementById('update-result').style.display = 'grid';
+                    
+                    // Refresh entries
+                    fetchEntries(title);
+                } catch (error) {
+                    console.error('Error updating password:', error);
+                    showAlert(`Error updating password: ${error.message}`, 'danger');
+                }
+            });
+            
+            // Delete functionality
+            document.getElementById('delete-btn').addEventListener('click', async () => {
+                const title = document.getElementById('delete-title').value;
+                const username = document.getElementById('delete-username').value;
+                const confirmed = document.getElementById('delete-confirm').checked;
+                
+                if (!title || !username) {
+                    showAlert('Title and username are required.', 'danger');
+                    return;
+                }
+                
+                if (!confirmed) {
+                    showAlert('Please confirm deletion.', 'danger');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`${BACKEND_URL}/passwords/${title}/${username}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (!response.ok) {
+                        const error = await response.text();
+                        throw new Error(error);
+                    }
+                    
+                    showAlert('Password entry deleted successfully!');
+                    
+                    // Refresh titles and entries
+                    fetchTitles();
+                    
+                    // Reset confirmation
+                    document.getElementById('delete-confirm').checked = false;
+                } catch (error) {
+                    console.error('Error deleting password:', error);
+                    showAlert(`Error deleting password: ${error.message}`, 'danger');
+                }
+            });
+            
+            // Toggle password visibility
+            const passwordToggles = [
+                ['search-password', 'toggle-search-password'],
+                ['create-password', 'toggle-create-password'],
+                ['created-password', 'toggle-created-password'],
+                ['update-password', 'toggle-update-password'],
+                ['old-password', 'toggle-old-password'],
+                ['new-password', 'toggle-new-password']
+            ];
+            
+            passwordToggles.forEach(([inputId, buttonId]) => {
+                document.getElementById(buttonId)?.addEventListener('click', () => {
+                    togglePasswordVisibility(inputId, buttonId);
+                });
+            });
+            
+            // Copy password to clipboard
+            const copyButtons = [
+                ['search-password', 'copy-search-password'],
+                ['created-password', 'copy-created-password'],
+                ['old-password', 'copy-old-password'],
+                ['new-password', 'copy-new-password']
+            ];
+            
+            copyButtons.forEach(([inputId, buttonId]) => {
+                document.getElementById(buttonId)?.addEventListener('click', () => {
+                    const password = document.getElementById(inputId).value;
+                    copyToClipboard(password);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
