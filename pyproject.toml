@@ -1,7 +1,7 @@
 [project]
 name = "keypass"
 version = "0.1.0"
-description = "Add your description here"
+description = "Feature-rich, lightweight, local password manager with FastAPI + SQLite backend."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
