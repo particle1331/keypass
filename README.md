@@ -1,12 +1,9 @@
-# KeyPass - Lightweight Password Manager
+# KeyPass
 
-A password manager built with FastAPI that combines simplicity with strong encryption.
-
-## Features
+A lightweight, local password manager that combines simplicity with strong encryption.
 
 - 🔑 Encryption using Fernet symmetric cryptography
 - 🔒 Secure storage with portable SQLite database
-- 📱 Multi-device compatible
 - ✨ Full CRUD operations support
 - 🌐 Clean web interface for easy access
 - 🎲 Automatic strong password generation
@@ -15,15 +12,10 @@ A password manager built with FastAPI that combines simplicity with strong encry
 
 ## Installation
 
-1. Clone this repository:
+Clone this repository:
 ```bash
-git clone <your-repo-url>
+git clone git@github.com:particle1331/keypass.git
 cd keypass
-```
-
-2. Install dependencies using pip or uv:
-```
-uv pip install -r requirements.txt
 ```
 
 ## Usage 
@@ -33,7 +25,7 @@ uv pip install -r requirements.txt
 uv run python -m keypass.main
 ```
 
-2. When prompted, enter your master password (input will be hidden)
+2. When prompted, enter your master password
 
 3. Open your browser at http://localhost:8000
 
@@ -42,18 +34,6 @@ uv run python -m keypass.main
 > Make sure to remember it and keep it secure.
 > If lost, the encrypted data cannot be recovered.
 
-## Database Structure
-
-```sql
-CREATE TABLE passwords (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    username TEXT NOT NULL,
-    url TEXT NOT NULL,
-    password TEXT NOT NULL,
-    UNIQUE (title, username)
-)
-```
 
 ## API Endpoints
 
