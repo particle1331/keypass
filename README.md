@@ -1,4 +1,4 @@
-# KeyPass
+# keypass: Password Vault
 
 A lightweight, local password manager that combines simplicity with strong encryption.
 
